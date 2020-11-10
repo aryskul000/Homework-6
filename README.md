@@ -1,0 +1,108 @@
+---
+title: 'Homework #6'
+author: "Adil Ryskulov"
+output: html_document
+---
+
+# Group members:
+Adil Ryskulov
+Zhannna Sarsenova
+Mst Parvin
+
+
+In this analysis we abalyzed labor force participation looking into different groups and their working chices.
+
+We will use acs2017_ny data in this analysis.
+
+```{r}
+load("C:/Users/Acer/Desktop/CCNY/2020/Fall 2020/Statistics and Introduction to Econometrics ECO B2000 2RS/R/PUMS data/ny/acs2017_ny_data.RData")
+```
+
+
+
+## Creating the data to use.
+
+First, we load data for observation and transimed into factor, which wil not treat dummy vaiables as continuous variables.
+
+```{r}
+acs2017_ny$LABFORCE <- as.factor(acs2017_ny$LABFORCE)
+levels(acs2017_ny$LABFORCE) <- c("NA", "Not in LF", "in LF")
+
+acs2017_ny$MARST <- as.factor(acs2017_ny$MARST)
+levels(acs2017_ny$MARST) <- c("married spouse present", "married spouse absent", "separated", "divorced", "widowed", "never married")
+```
+
+In order to see components of sample we will observe, we summarized it in table with different age brakets.
+
+```{r}
+acs2017_ny$age_bands <- cut(acs2017_ny$AGE,breaks=c(0,25,35,45,55,65,100))
+table(acs2017_ny$age_bands,acs2017_ny$LABFORCE)
+```
+
+In table summarized obeve we observing 31,680 individuals who are not applicable to Labor Force in age group under 25. This number arised from these individuals who are not eligible to partiipate in labor force due to legality of this aspect.
+The fraction of indivuduals who are eligible to participate in labor force, however, decided to not participate increasing along with rise an age groups. This is intuitavly due to proces where individuals in higher age group will start retiering.
+
+
+
+## Creating subset group.
+
+At this stage we will look at different subsets including gender separation by male and female. We belive that gender effects in labor participation. 
+Also, we will consider only those individuals who are between 25 to 65, in order to eliminate retieries, students, and individuals not eligible to paticipated in labor force.
+
+
+
+# First of all, we will analyze female between 25 to 65 years.
+
+```{r}
+use_var1 <- (acs2017_ny$AGE>=25) & (acs2017_ny$AGE<=65) & (acs2017_ny$female==1)
+dat_use1 <- subset(acs2017_ny, use_var1)
+dat_use1$LABFORCE <- droplevels(dat_use1$LABFORCE)
+```
+
+Regression Model for female in age group between 25 to 65 years old. Also, we will consider their race, ethnicity, and education level.As a base figure we choose white non hispanic female with High School diploma.
+
+```{r}
+model_logit1 <- glm(LABFORCE ~ AGE + I(AGE^2) + AfAm + Asian + race_oth + Hispanic + educ_nohs + educ_somecoll + educ_college + educ_advdeg, family = binomial, data = dat_use1)
+summary(model_logit1)
+```
+
+The Regressional Model reveals that Hispanic ethnicity is not statistically significant. Thus, ethnicity does not effects on female's participation in labor force. Meanwhile, all other variables are statistically significant at 99% level, and do effect on labor force participation.
+
+
+
+# Secondly, we will analyze male between 25 to 65 years
+
+```{r}
+use_var2 <- (acs2017_ny$AGE>=25) & (acs2017_ny$AGE<=65) & (acs2017_ny$female==0)
+dat_use2 <- subset(acs2017_ny, use_var2)
+dat_use2$LABFORCE <- droplevels(dat_use2$LABFORCE)
+```
+
+Regression Model for male in age group between 25 to 65 years old. Also, we will consider their race, ethnicity, and education level.As a base figure we choose white non hispanic male with High School diploma.
+
+```{r}
+model_logit2 <- glm(LABFORCE ~ AGE + I(AGE^2) + AfAm + Asian + race_oth + Hispanic + educ_nohs + educ_somecoll + educ_college + educ_advdeg, family = binomial, data = dat_use2)
+summary(model_logit2)
+```
+
+The Regressional Model reveals that race_oth is not statistically significant. Thus, other races does not effects on male's participation in labor force. In comparicon to female, the ethnisity does effect on labor participation due to statistical signicinace. Meanwhile, all other variables are statistically significant at 99% level, and do effect on labor force participation.
+
+
+
+# Now, we will analyze both male and female between 25 to 65 years along with marrital status.
+
+```{r}
+use_var3 <- (acs2017_ny$AGE>=25) & (acs2017_ny$AGE<=65)
+dat_use3 <- subset(acs2017_ny, use_var3)
+dat_use3$LABFORCE <- droplevels(dat_use3$LABFORCE)
+```
+
+Regression Model for individuals in age group between 25 to 65 years old. Also, we will consider their race, ethnicity, and education level.As a base figure we choose white non hispanic individual with High School diploma and who is married and spouce is precented.
+
+```{r}
+model_logit3 <- glm(LABFORCE ~ AGE + I(AGE^2) + AfAm + Asian + race_oth + Hispanic + educ_nohs + educ_somecoll + educ_college + educ_advdeg + MARST, family = binomial, data = dat_use2)
+summary(model_logit3)
+```
+
+The Regressional Model reveals that race_oth is not statistically significant. Thus, other races does not effects on participation in labor force. Meanwhile, all other variables are statistically significant at 99% level, and do effect on labor force participation.
+Also, Regression Models reveals a nagative effect of other marrital status on participation in labor forces in comparison to these individuals who are married and spouce is precent.
